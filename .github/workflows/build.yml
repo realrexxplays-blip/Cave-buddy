@@ -129,7 +129,7 @@ jobs:
           PY
 
           echo "--- Patched mod constructor and model methods ---"
-          grep -nE 'CaveBuddyMod\\(|event.accept|renderToBuffer|this.root' "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/CaveBuddyMod.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/client/CaveBuddyModel.java
+          grep -nE 'CaveBuddyMod[(]|event.accept|renderToBuffer|this.root' "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/CaveBuddyMod.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/client/CaveBuddyModel.java
 
       - name: Build mod
         run: gradle --no-daemon clean build --stacktrace
