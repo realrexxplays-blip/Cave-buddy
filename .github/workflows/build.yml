@@ -94,6 +94,14 @@ jobs:
           echo "--- Mod metadata ---"
           cat "$MOD_DIR/src/main/resources/META-INF/neoforge.mods.toml"
 
+      - name: Inspect Java source before patching
+        shell: bash
+        run: |
+          for f in "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/CaveBuddyMod.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/entity/CaveBuddyEntity.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/client/CaveBuddyModel.java; do
+            echo "===== $f ====="
+            cat "$f"
+          done
+
       - name: Build mod
         run: gradle --no-daemon clean build --stacktrace
         working-directory: ${{ env.MOD_DIR }}
