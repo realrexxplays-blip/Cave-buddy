@@ -100,7 +100,8 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          import os\n          root = Path(os.environ["MOD_DIR"]) / "src/main/java/com/rexxplayz/cavebuddy"
+          import os
+          root = Path(os.environ["MOD_DIR"]) / "src/main/java/com/rexxplayz/cavebuddy"
           mod = root / "CaveBuddyMod.java"
           s = mod.read_text()
           s = s.replace("import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;\n", "")
