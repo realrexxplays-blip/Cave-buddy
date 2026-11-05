@@ -94,13 +94,41 @@ jobs:
           echo "--- Mod metadata ---"
           cat "$MOD_DIR/src/main/resources/META-INF/neoforge.mods.toml"
 
-      - name: Inspect Java source before patching
+      - name: Patch source for NeoForge 1.21.1 APIs
         shell: bash
         run: |
-          for f in "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/CaveBuddyMod.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/entity/CaveBuddyEntity.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/client/CaveBuddyModel.java; do
-            echo "===== $f ====="
-            cat "$f"
-          done
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("source/CaveBuddy-26.3/src/main/java/com/rexxplayz/cavebuddy")
+          mod = root / "CaveBuddyMod.java"
+          s = mod.read_text()
+          s = s.replace("import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;\\n", "")
+          s = s.replace("    public CaveBuddyMod() {\\n        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();",
+                        "    public CaveBuddyMod(IEventBus modBus) {")
+          s = s.replace("event.accept(CAVE_BUDDY_SPAWN_EGG);", "event.accept(CAVE_BUDDY_SPAWN_EGG.get());")
+          s = s.replace("event.accept(BUDDY_WHISTLE);", "event.accept(BUDDY_WHISTLE.get());")
+          mod.write_text(s)
+
+          entity = root / "entity/CaveBuddyEntity.java"
+          s = entity.read_text().replace("        this.setTame(false);\\n", "")
+          entity.write_text(s)
+
+          model = root / "client/CaveBuddyModel.java"
+          s = model.read_text()
+          s = s.replace("import net.minecraft.client.model.geom.ModelPart;\\n",
+                        "import net.minecraft.client.model.geom.ModelPart;\\nimport com.mojang.blaze3d.vertex.PoseStack;\\nimport com.mojang.blaze3d.vertex.VertexConsumer;\\n")
+          s = s.replace("    private final ModelPart body;", "    private final ModelPart root;\\n    private final ModelPart body;")
+          s = s.replace("    public CaveBuddyModel(ModelPart root) {\\n        this.body",
+                        "    public CaveBuddyModel(ModelPart root) {\\n        this.root = root;\\n        this.body")
+          s = s.replace("    @Override\\n    public void setupAnim(",
+                        "    @Override\\n    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {\\n        root.render(poseStack, buffer, packedLight, packedOverlay, color);\\n    }\\n\\n    @Override\\n    public void setupAnim(")
+          model.write_text(s)
+          print("Applied NeoForge 1.21.1 compatibility patches.")
+          PY
+
+          echo "--- Patched mod constructor and model methods ---"
+          grep -nE 'CaveBuddyMod\\(|event.accept|renderToBuffer|this.root' "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/CaveBuddyMod.java "$MOD_DIR"/src/main/java/com/rexxplayz/cavebuddy/client/CaveBuddyModel.java
 
       - name: Build mod
         run: gradle --no-daemon clean build --stacktrace
